@@ -1,0 +1,1 @@
+peer chaincode package -n mycc -p chaincodedev/chaincode/chaincode_example02 -v 0 -s -S -i "AND('OrgA.admin')" ccpack.out

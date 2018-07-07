@@ -1,0 +1,71 @@
+Below are the steps required to bootstrap the fabric run time env. 
+
+1. Determine a location for Hyperledger Fabric on your machine. I created 'hlf' directory
+2. clone the repository - Go to the location and run 
+git clone -b release-1.1 https://github.com/hyperledger/fabric-samples.git
+cd fabric-samples
+git checkout v1.1.0
+
+3. Ensure the docker daemon is running. 
+4. Run a script to download the images and binaries :
+    curl -sSL https://goo.gl/6wtTN5 | bash -s 1.1.0
+ 
+ You will observe following things 
+ - Below hyperledger binaries have been downloaded from https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger/fabric/hyperledger-fabric/darwin-amd64-1.1.0
+
+    - hyperledger-fabric-darwin-amd64-1.1.0.tar
+    - hyperledger-fabric-ca-darwin-amd64-1.2.0-rc1.tar.gz
+
+ - Then it install below hyperledger fabric docker images
+ List out hyperledger docker images
+    - hyperledger/fabric-peer
+    - hyperledger/fabric-orderer
+    - hyperledger/fabric-ccenv
+    - hyperledger/fabric-tools
+    - hyperledger/fabric-ca 
+    - hyperledger/fabric-javaenv
+    - hyperledger/fabric-baseimage   
+    - hyperledger/fabric-zookeeper
+    - hyperledger/fabric-kafka
+    - hyperledger/fabric-couchdb
+    - hyperledger/fabric-baseos
+
+At this time, all the needed dockers images are available locally. 
+Now with the right script, we can bootstrap a HLF network with two organisations, each with two peers and an Ordering Service (OS). It will also join peers to a channel, deploy chaincode and execute transactions.  
+
+Bootstrap the Hyper ledger fabric env
+----------------------------------------
+
+
+5. Go to <your HLF location>/fabric-samples/first-network and look to byfn.sh 
+
+byfn.sh -h|--help (print this message)
+    <mode> - one of 'up', 'down', 'restart' or 'generate'
+      - 'up' - bring up the network with docker-compose up
+      - 'down' - clear the network with docker-compose down
+      - 'restart' - restart the network
+      - 'generate' - generate required certificates and genesis block
+      - 'upgrade'  - upgrade the network from v1.0.x to v1.1
+    -c <channel name> - channel name to use (defaults to "mychannel")
+    -t <timeout> - CLI timeout duration in seconds (defaults to 10)
+    -d <delay> - delay duration in seconds (defaults to 3)
+    -f <docker-compose-file> - specify which docker-compose file use (defaults to docker-compose-cli.yaml)
+    -s <dbtype> - the database backend to use: goleveldb (default) or couchdb
+    -l <language> - the chaincode language: golang (default) or node
+    -i <imagetag> - the tag to be used to launch the network (defaults to "latest")
+
+Typically, one would first generate the required certificates and 
+genesis block, then bring up the network. 
+
+
+6. run ./byfn.sh generate -c nitishChannel   
+Observations 
+    - Generating certs and genesis block for with channel 'nitishChannel' and CLI timeout of '10' seconds and CLI delay of '3' seconds
+   - Generate certificates using cryptogen tool 
+        -- cryptogen generate --config=./crypto-config.yaml
+   - Generating Orderer Genesis block
+        -- configtxgen -profile TwoOrgsOrdererGenesis -outputBlock ./channel-artifacts/genesis.block
+   - Generating channel configuration transaction 'channel.tx'
+        -- configtxgen -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID nitishChannel
+   - Generating anchor peer update for Org1MSP  
+   - Generating anchor peer update for Org2MSP              

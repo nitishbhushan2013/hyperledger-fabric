@@ -1,0 +1,6 @@
+export PATH=/Users/nitishbhushan/Documents/nitish operations/technical/tehnologies/hyperledger-fabric/gitRepo/hlf/fabric-samples/bin:$PATH
+
+
+Nitishs-MacBook-Pro:first-network nitishbhushan$ export PATH=/Users/nitishbhushan/Documents/nitish operations/technical/tehnologies/hyperledger-fabric/gitRepo/hlf/fabric-samples/bin:$PATH
+-bash: export: `operations/technical/tehnologies/hyperledger-fabric/gitRepo/hlf/fabric-samples/bin:/Users/nitishbhushan/.nvm/versions/node/v8.11.2/bin:/Library/Frameworks/Python.framework/Versions/3.5/bin:/usr/local/mysql/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/go/bin': not a valid identifier
+Nitishs-MacBook-Pro:first-network nitishbhushan$ 
