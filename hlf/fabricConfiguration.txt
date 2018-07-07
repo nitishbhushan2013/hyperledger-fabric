@@ -1,0 +1,58 @@
+Thanks Anil. Yes, it indeed helped me to connect the dots. Now I am ready with a flow details. Can you please review it and let me know if my understanding is right ?  
+
+Below are steps needed to confiure fabric run time as per the defined network topology and make it operationalise  to be ready to accept and process incoming transaction. I am comparing these steps with the byfn.sh. 
+
+Pre-requisite 
+---------------
+
+Below are some of the high level out put for ./byfn.sh generate
+
+1. cryptogen generate --config=./crypto-config.yaml 
+ 1.1 - This script will use the crypto-config.yaml file to generate the crypto certificates and keys for all the organisation and related entities. crypto-config.yaml contains the network topology details [ organisation and its peer details ]
+
+2. configtxgen
+  2.1-  This script will use the cryptotx.yaml file to accomplish below tasks . cryptotx.yaml contains differenrt profiles for orderer and channel configuration.
+      2.1.1  Based on the ‘TwoOrgsOrdererGenesis' profile desc, Create orderer genesis block 
+      2.1.2  generate anchor peer in each of the org ( I beleive, orderer would pass the details to Anchor peer to communicate to committer peer in that channel)
+      2.1.3  Based on the ‘TwoOrgsChannel’ profile desc,  create the channel configuration file. This channel configuration file would later run on orderer to create the genesis block. 
+
+The above work ensures that we have basic building blocks ready for the actual use. At this stage, We have already defined and cryptographically configured organization, peers, orderer and created channel configuration file.  
+
+Server start up 
+---------------
+Below are some of the high level out put for  ./byfn.sh up
+
+3. Start all the relevent containers [ orderer, peer, chaincode, cli]
+4. create the channel by passing the orderer, channel id name and channel configuration file (pls look to 2.1.3)
+ command - peer channel create -o orderer.example.com:7050 -c mychannel -f ./channel-artifacts/channel.tx 
+    4.1 The orderer will create a genesis block for the channel as per the channel configutation file. Each channel is ideally a blockchain ledger and needs a genesis block. It sends by default the genesis block back to the client.
+5. Now its time for the peer to join the channel. There could be more than one channel possible and each peer can part of multiple channel.  Execute below command to let peer join the channel and have access to genesis block. 
+Note : This step should repeat for each of the peer in the network for it to join the channel
+ command - peer channel join -b mychannel.block
+    5.1 Above command will give the peer server the genesis block, so it can and will join the channel (query the blocks from other peers in the channel via Gossip or from the orderer).
+    Notice that the peer client is just connected to one peer server, so we have a CLI container for each peer container. You can change this dynamically and use one CLI for all peers but this is a different story.
+6. Now its time to install the chain code on the peer to perform business logics. Below command will install the chaincode on peer. [ @Anil - where is endorsement policy?????] 
+Note : Repeat for each of the ENDORSING peer in the network.
+command - peer chaincode install -n mycc -v 1.0 -l golang -p github.com/chaincode/chaincode_example02/go/
+    6.1 Above command will create a package with the source code of the chaincode and some signatures (e.g. that you have the permission to install a chaincode) and send it to the peer server (one of the peer containers).
+7. Now chaincode is installed individually on each peer, its time to initialize the chaincode with some initial value. 
+command - peer chaincode instantiate -o orderer.example.com:7050  -C mychannel -n mycc -l golang -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P 'OR    ('\''Org1MSP.peer'\'','\''Org2MSP.peer'\'')'
+    7.1 Above will be the very first invoke on the chaincode. You instantiate a chaincode once per channel. It is almost the same like `peer chaincode invoke`.
+
+At this stage, fabric run time env is fully ready to accept any incoming transaction - either its query or invoke. Each invoke transaction has a potential to update the world state view of the ledger. 
+
+8. client can initiate 'peer chanincode query' or 'peer chaincode invoke’ to initiate the transaction 
+command - 
+      peer chaincode query -C mychannel -n mycc -c '{"Args":["query","a"]}’
+      peer chaincode invoke -o orderer.example.com:7050 -C mychannel -n mycc -c '{"Args":["invoke","a","b","10"]}'
+    8.1 `peer chaincode invoke` will create a transaction and send it first to the peers, so they can endorse the transaction (simulating the transaction). It will get responses from different peers (if you use NodeJS SDK, the CLI can just be connect to one peer at the same time) and can decide if it will send the transaction to the orderer. The orderer will collect transactions and send a block to the peers. It will also send a message to the client (which started the process) that the transaction is in a block (valid).
+
+
+Below are the very high level steps for fabric run time to process incoming transaction. 
+1. Transaction proposal - Client program initiate the transaction proposal with the endorsing peer in the fabric run time. 
+2. Transaction Endorsement - Since each endorsement peer connect to particular channel, each channel has chaincode and each chaincode has at least one endorsement policy, this means Endorser peer has access to chaincode and endorsement policy. Each peer then verify, authenticate and then SIMULATE the proposed transaction on chaincode and get RW set of data. It then send all endorsement response [ peer signature, RW set, Approve|disapprove flag ] to client application. 
+3.Client then send list of all endorsement response to orderer service. 
+4. ordering service enforce validation rules,verify RW set and then order the transaction and send it to committer peers for commiting to ledger. 
+4. Commiter peer then validate the transaction [ against endorsement policy, confirm RW set] and if all is good then commit block to edger, thus updating current state of world state.
+
+At last, each commiting peer aync inform the client program of the success/failure of transaction.
