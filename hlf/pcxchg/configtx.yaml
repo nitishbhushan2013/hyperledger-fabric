@@ -1,0 +1,165 @@
+Organizations:
+
+    # SampleOrg defines an MSP using the sampleconfig.  It should never be used
+    # in production but may be used as a template for other definitions
+  - &OrdererOrg
+        # DefaultOrg defines the organization which is used in the sampleconfig
+        # of the fabric.git development environment
+    Name: OrdererOrg
+
+        # ID to load the MSP definition as
+    ID: OrdererMSP
+
+        # MSPDir is the filesystem path which contains the MSP configuration
+    MSPDir: crypto-config/ordererOrganizations/pcxchng.com.au/msp
+
+  - &Asus
+        # DefaultOrg defines the organization which is used in the sampleconfig
+        # of the fabric.git development environment
+    Name: AsusMSP
+
+        # ID to load the MSP definition as
+    ID: AsusMSP
+
+    MSPDir: crypto-config/peerOrganizations/Asus.com.au/msp
+
+    AnchorPeers:
+            # AnchorPeers defines the location of peers which can be used
+            # for cross org gossip communication.  Note, this value is only
+            # encoded in the genesis block in the Application section context
+      - Host: peer0.Asus.com.au
+        Port: 7051
+
+  - &Dell
+        # DefaultOrg defines the organization which is used in the sampleconfig
+        # of the fabric.git development environment
+    Name: DellMSP
+
+        # ID to load the MSP definition as
+    ID: DellMSP
+
+    MSPDir: crypto-config/peerOrganizations/Dell.com.au/msp
+
+    AnchorPeers:
+            # AnchorPeers defines the location of peers which can be used
+            # for cross org gossip communication.  Note, this value is only
+            # encoded in the genesis block in the Application section context
+      - Host: peer0.Dell.com.au
+        Port: 7051
+
+  - &Hp
+        # DefaultOrg defines the organization which is used in the sampleconfig
+        # of the fabric.git development environment
+    Name: HpMSP
+
+        # ID to load the MSP definition as
+    ID: HpMSP
+
+    MSPDir: crypto-config/peerOrganizations/Hp.com.au/msp
+
+    AnchorPeers:
+            # AnchorPeers defines the location of peers which can be used
+            # for cross org gossip communication.  Note, this value is only
+            # encoded in the genesis block in the Application section context
+      - Host: peer0.Hp.com.au
+        Port: 7051
+
+  - &Amazon
+        # DefaultOrg defines the organization which is used in the sampleconfig
+        # of the fabric.git development environment
+    Name: AmazonMSP
+
+        # ID to load the MSP definition as
+    ID: AmazonMSP
+
+    MSPDir: crypto-config/peerOrganizations/Amazon.com.au/msp
+
+    AnchorPeers:
+            # AnchorPeers defines the location of peers which can be used
+            # for cross org gossip communication.  Note, this value is only
+            # encoded in the genesis block in the Application section context
+      - Host: peer0.Amazon.com.au
+        Port: 7051   
+
+
+Orderer: &OrdererDefaults
+
+    # Orderer Type: The orderer implementation to start
+    # Available types are "solo" and "kafka"
+  OrdererType: solo
+
+  Addresses:
+    - orderer.pcxchng.com.au:7050
+
+    # Batch Timeout: The amount of time to wait before creating a batch
+  BatchTimeout: 2s
+
+    # Batch Size: Controls the number of messages batched into a block
+  BatchSize:
+
+        # Max Message Count: The maximum number of messages to permit in a batch
+    MaxMessageCount: 10
+
+        # Absolute Max Bytes: The absolute maximum number of bytes allowed for
+        # the serialized messages in a batch.
+    AbsoluteMaxBytes: 99 MB
+
+        # Preferred Max Bytes: The preferred maximum number of bytes allowed for
+        # the serialized messages in a batch. A message larger than the preferred
+        # max bytes will result in a batch larger than preferred max bytes.
+    PreferredMaxBytes: 512 KB
+
+    # Organizations is the list of orgs which are defined as participants on
+    # the orderer side of the network
+  Organizations:
+
+
+Application: &ApplicationDefaults
+
+    # Organizations is the list of orgs which are defined as participants on
+    # the application side of the network
+  Organizations:
+
+               
+
+
+
+Profiles:
+
+  PCXCHNGOrdererGenesis: 
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations: 
+        - *OrdererOrg
+
+    Consortiums:
+      PCXCHNGConsortium:
+        Organizations:
+          - *Asus
+          - *Dell
+          - *Amazon
+          - *Hp
+
+  AsusChannel:
+    Consortium : PCXCHNGConsortium
+    Application: 
+      <<: *ApplicationDefaults
+      Organizations:
+        - *Amazon
+        - *Asus
+
+  HpChannel:
+    Consortium: PCXCHNGConsortium
+    Applications:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *Amazon
+        - *Hp  
+
+  DellChannel:
+    Consortium: PCXCHNGConsortium
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *Amazon
+        - *Dell
