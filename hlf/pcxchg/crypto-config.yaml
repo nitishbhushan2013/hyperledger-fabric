@@ -1,0 +1,38 @@
+# Admin and Peer certificate will be created automatically by cryptogen.exec
+#Imp 
+  #spacing after : is important
+  # Tab spacing is maintained   
+OrdererOrgs: 
+  - Name: Orderer
+    Domain: pcxchng.com.au
+    Specs:
+      - Hostname: orderer
+
+PeerOrgs:
+  - Name: Asus
+    Domain: Asus.com.au
+    Template:
+      Count: 1
+    Users:
+      Count: 1
+  - Name: Dell
+    Domain: Dell.com.au
+    Template:
+      Count: 1
+    users:
+      Count: 1
+  - Name: HP
+    Domain: Hp.com.au
+    Template:
+      Count: 1
+    Users:
+      Count: 1
+  - Name: Amazon
+    Domain: Amazon.com.au
+    Template:
+      Count: 1
+    Users:
+      Count: 1
+
+
+
