@@ -1,0 +1,183 @@
+version: '2'
+
+networks:
+  pcxchng:
+
+services:
+  # define orderer container
+  orderer.pcxchng.com.au:
+    image: hyperledger/fabric-orderer:x86_64-1.1.0  
+    container_name: orderer.pcxchng.com.au
+    environment: 
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+    volumes:
+      - ./orderer/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ./crypto-config/ordererOrganizations/pcxchng.com.au/orderers/orderer.pcxchng.com.au/msp:/var/hyperledger/orderer/msp
+    command: orderer
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    ports:
+      - 7050:7050
+    networks:
+      - pcxchng
+
+  # define all the peer containers
+  peer0.Amazon.com.au:
+    container_name: peer0.Amazon.com
+    extends: 
+      file: ./peer.yaml
+      service: peer
+    environment: 
+      - CORE_PEER_ID=peer0.Amazon.com.au
+      - CORE_PEER_ADDRESS=peer0.Amazon.com.au:7051
+      - CORE_PEER_LOCALMSPID=AmazonMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/peer/  
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.Amazon.com.au:7051
+    volumes: 
+      - ./crypto-config/peerOrganizations/Amazon.com.au/peers/peer0.Amazon.com.au/msp:/etc/hyperledger/msp/peer  
+    ports:
+      - 7051:7051
+      - 7053:7053
+    depends_on: 
+      - orderer.pcxchng.com.au
+    networks: 
+      - pcxchng    
+
+  peer0.Asus.com.au:
+    container_name: peer0.Asus.com
+    extends: 
+      file: ./peer.yaml
+      service: peer
+    environment: 
+      - CORE_PEER_ID=peer0.Asus.com.au
+      - CORE_PEER_ADDRESS=peer0.Asus.com.au:7051
+      - CORE_PEER_LOCALMSPID=AsusMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/peer/  
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.Asus.com.au:7051
+    volumes: 
+      - ./crypto-config/peerOrganizations/Asus.com.au/peers/peer0.Asus.com.au/msp:/etc/hyperledger/msp/peer  
+    ports:
+      - 8051:7051
+      - 8053:7053
+    depends_on: 
+      - orderer.pcxchng.com.au
+    networks: 
+      - pcxchng  
+
+  peer0.Dell.com.au:
+    container_name: peer0.Dell.com
+    extends: 
+      file: ./peer.yaml
+      service: peer
+    environment: 
+      - CORE_PEER_ID=peer0.Dell.com.au
+      - CORE_PEER_ADDRESS=peer0.Dell.com.au:7051
+      - CORE_PEER_LOCALMSPID=DellMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/peer/  
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.Dell.com.au:7051
+    volumes: 
+      - ./crypto-config/peerOrganizations/Dell.com.au/peers/peer0.Dell.com.au/msp:/etc/hyperledger/msp/peer  
+    ports:
+      - 9051:7051
+      - 9053:7053
+    depends_on: 
+      - orderer.pcxchng.com.au
+    networks: 
+      - pcxchng 
+
+  peer0.Hp.com.au:
+    container_name: peer0.Hp.com
+    extends: 
+      file: ./peer.yaml
+      service: peer
+    environment: 
+      - CORE_PEER_ID=peer0.Hp.com.au
+      - CORE_PEER_ADDRESS=peer0.Hp.com.au:7051
+      - CORE_PEER_LOCALMSPID=HpMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/peer/  
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.Hp.com.au:7051
+    volumes: 
+      - ./crypto-config/peerOrganizations/Hp.com.au/peers/peer0.Hp.com.au/msp:/etc/hyperledger/msp/peer  
+    ports:
+      - 10051:7051
+      - 10053:7053
+    depends_on: 
+      - orderer.pcxchng.com.au
+    networks: 
+      - pcxchng     
+
+  # define cli container for each peer 
+  cli.Amazon:
+    extends:
+      file: ./cli.yaml
+      service: cli
+    container_name: cli.Amazon
+    environment: 
+      - CORE_PEER_ID=cli.Amazon.com.au
+      - CORE_PEER_ADDRESS=peer0.Amazon.com.au:7051
+      - CORE_PEER_LOCALMSPID=AmazonMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@Amazon.com.au/msp
+    volumes:
+      - ./crypto-config/peerOrganizations/Amazon.com.au:/etc/hyperledger/msp
+    depends_on:
+      - orderer.pcxchng.com.au
+      - peer0.Amazon.com.au
+    networks: 
+     - pcxchng
+
+  cli.Asus:
+    extends:
+      file: ./cli.yaml
+      service: cli
+    container_name: cli.Asus
+    environment: 
+     - CORE_PEER_ID=cli.Asus.com.au
+     - CORE_PEER_ADDRESS=peer0.Asus.com.au:7051
+     - CORE_PEER_LOCALMSPID=AsusMSP
+     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@Asus.com.au/msp
+    volumes:
+     - ./crypto-config/peerOrganizations/Asus.com.au:/etc/hyperledger/msp
+    depends_on:
+     - orderer.pcxchng.com.au
+     - peer0.Asus.com.au
+    networks: 
+    - pcxchng
+
+  cli.Dell:
+    extends:
+      file: ./cli.yaml
+      service: cli
+    container_name: cli.Dell
+    environment: 
+      - CORE_PEER_ID=cli.Dell.com.au
+      - CORE_PEER_ADDRESS=peer0.Dell.com.au:7051
+      - CORE_PEER_LOCALMSPID=DellMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@Dell.com.au/msp
+    volumes:
+      - ./crypto-config/peerOrganizations/Dell.com.au:/etc/hyperledger/msp
+    depends_on:
+      - orderer.pcxchng.com.au
+      - peer0.Dell.com.au
+    networks: 
+     - pcxchng
+
+  cli.Hp:
+    extends:
+      file: ./cli.yaml
+      service: cli
+    container_name: cli.Hp
+    environment: 
+      - CORE_PEER_ID=cli.Hp.com.au
+      - CORE_PEER_ADDRESS=peer0.Hp.com.au:7051
+      - CORE_PEER_LOCALMSPID=HpMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@Hp.com.au/msp
+    volumes:
+      - ./crypto-config/peerOrganizations/Hp.com.au:/etc/hyperledger/msp
+    depends_on:
+      - orderer.pcxchng.com.au
+      - peer0.Hp.com.au
+    networks: 
+     - pcxchng   
